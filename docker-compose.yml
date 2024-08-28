@@ -1,0 +1,16 @@
+services:
+  db:
+    container_name: $DB_CONTAINER
+    env_file: ./.env
+    image: postgres:16
+    restart: unless-stopped
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - $DB_HOST_PORT:$DB_CONTAINER_PORT
+    environment:
+      POSTGRES_USER: $DB_USER
+      POSTGRES_PASSWORD: $DB_PASSWORD
+      POSTGRES_DB: $DB_NAME  
+volumes:
+  pgdata: {}
