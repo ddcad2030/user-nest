@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  Session,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -14,20 +15,45 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { NotFoundException, UseInterceptors } from '@nestjs/common';
 import { Serialize } from '../interceptors/serialize.interceptors';
 import { UserDto } from './dto/user.dto';
+import { AuthService } from './auth/auth.service';
 
 @Controller('auth')
-@Serialize(UserDto)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private usersService: UsersService,
+    private authService: AuthService,
+  ) {}
+
+  @Get('/colors/:colors')
+  setColor(@Param('color') color: string, @Session() session: any) {
+    session.color = color;
+  }
+
+  @Get('/colors')
+  getColor(@Session() session: any) {
+    return session.color;
+  }
+
+  @Get("/whoami")
+  whoAmI(@Session() session: any){
+    return this.usersService.findOne(session.userId)
+  }
 
   @Post('/signup')
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  async create(@Body() body: CreateUserDto, @Session() session: any) {
+    const user = await this.authService.signUp(body.email, body.password);
+    session.userId = user.id;
+    return user;
+  }
+
+  @Get("/signOut")
+  signOut(@Session() session: any){
+    session.userId = 0
   }
 
   @Get('/all')
   findAllUser() {
-    return this.usersService.findAll()
+    return this.usersService.findAll();
   }
 
   @Get()
@@ -35,6 +61,7 @@ export class UsersController {
     return this.usersService.find(email);
   }
 
+  @Serialize(UserDto)
   @Get(':id')
   findOne(@Param('id') id: string) {
     const user = this.usersService.findOne(parseInt(id));
