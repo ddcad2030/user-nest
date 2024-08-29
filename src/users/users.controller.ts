@@ -6,78 +6,61 @@ import {
   Patch,
   Param,
   Delete,
-  Query,
-  Session,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { NotFoundException, UseInterceptors } from '@nestjs/common';
-import { Serialize } from '../interceptors/serialize.interceptors';
+import { Serialize } from 'src/interceptors/serialize.interceptors';
 import { UserDto } from './dto/user.dto';
-import { AuthService } from './auth/auth.service';
 
-@Controller('auth')
+@Controller('users')
 export class UsersController {
-  constructor(
-    private usersService: UsersService,
-    private authService: AuthService,
-  ) {}
+  constructor(private readonly usersService: UsersService) {}
 
-  @Get('/colors/:colors')
-  setColor(@Param('color') color: string, @Session() session: any) {
-    session.color = color;
-  }
-
-  @Get('/colors')
-  getColor(@Session() session: any) {
-    return session.color;
-  }
-
-  @Get("/whoami")
-  whoAmI(@Session() session: any){
-    return this.usersService.findOne(session.userId)
-  }
-
-  @Post('/signup')
-  async create(@Body() body: CreateUserDto, @Session() session: any) {
-    const user = await this.authService.signUp(body.email, body.password);
-    session.userId = user.id;
-    return user;
-  }
-
-  @Get("/signOut")
-  signOut(@Session() session: any){
-    session.userId = 0
-  }
-
-  @Get('/all')
-  findAllUser() {
-    return this.usersService.findAll();
+  @Post()
+  async create(@Body() createUserDto: CreateUserDto) {
+    try {
+      await this.usersService.create(createUserDto);
+      return { success: true, message: 'Create successful' };
+    } catch (error) {
+      return { success: fail, message: error.message };
+    }
   }
 
   @Get()
-  findAll(@Query('email') email: string) {
-    return this.usersService.find(email);
+  async findAll() {
+    try {
+      const data = await this.usersService.findAll();
+      return { success: true, message: 'Fetch successful', data };
+    } catch (error) {
+      return { success: fail, message: error.message };
+    }
   }
 
   @Serialize(UserDto)
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    const user = this.usersService.findOne(parseInt(id));
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    return user;
+  async findOne(@Param('id') id: string) {
+    const data = await this.usersService.findOne(+id);
+    return data;
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    try {
+      await this.usersService.update(+id, updateUserDto);
+      return { success: true, message: 'Update successful' };
+    } catch (error) {
+      return { success: fail, message: error.message };
+    }
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  async remove(@Param('id') id: string) {
+    try {
+      await this.usersService.remove(+id);
+      return { success: true, message: 'Delete successful' };
+    } catch (error) {
+      return { success: fail, message: error.message };
+    }
   }
 }

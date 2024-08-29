@@ -11,42 +11,31 @@ export class UsersService {
     private repo: Repository<User>,
   ) {}
 
-  async create(createUserDto: CreateUserDto) {
-    return await this.repo.save(createUserDto);
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    const user = await this.repo.create(createUserDto);
+    return this.repo.save(user);
   }
 
-  async findAll() {
+  async findAll(): Promise<User[]> {
     return await this.repo.find();
   }
 
-  async findOne(id: number) {
-    return await this.repo.findOne({
-      where: { id },
-      select: { email: true, password: true },
-    });
-  }
-
-  async find(email: string) {
-    return this.repo.find({
-      where: { email },
-      select: { email: true, password: true },
-    });
-  }
-
-  async update(id: number, updateUserDto: UpdateUserDto) {
+  async findOne(id: number): Promise<User> {
     const user = await this.repo.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    await this.repo.update(id, updateUserDto);
-    return await this.repo.findOne({ where: { id } });
+    return user;
   }
 
-  async remove(id: number) {
+  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+    const existingUser = await this.repo.findOne({ where: { id } });
+    const user = await this.repo.merge(existingUser, updateUserDto);
+    return await this.repo.save(user);
+  }
+
+  async remove(id: number): Promise<User> {
     const user = await this.repo.findOne({ where: { id } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    return this.repo.delete(id);
+    return this.repo.remove(user);
   }
 }
