@@ -1,4 +1,5 @@
 import { User } from 'src/users/entities/user.entity';
+import { Report } from 'src/reports/entities/report.entity';
 import { DataSource } from 'typeorm';
 
 export const dataProviders = [
@@ -12,7 +13,7 @@ export const dataProviders = [
         username: process.env.DB_USER,
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
-        entities: [User],
+        entities: [Report, User],
         synchronize: true,
       });
       return dataSource.initialize();
